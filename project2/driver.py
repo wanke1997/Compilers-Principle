@@ -55,7 +55,6 @@ class RecursiveParser:
             if res1 and res2:
                 self.cache[s] = True
                 return True
-
         return False
 
     def E_quote(self, s: str) -> bool:
@@ -71,7 +70,6 @@ class RecursiveParser:
             if res1 and res2 and res3:
                 self.cache[s] = True
                 return True
-
         return False
 
     def F(self, s: str) -> bool:
@@ -106,7 +104,6 @@ class RecursiveParser:
             if res1 and res2:
                 self.cache[s] = True
                 return True
-
         return False
 
     def T_quote(self, s: str) -> bool:
@@ -121,7 +118,6 @@ class RecursiveParser:
             if res1 and res2 and res3:
                 self.cache[s] = True
                 return True
-
         return False
 
     def V(self, s: str) -> bool:
@@ -133,7 +129,6 @@ class RecursiveParser:
             self.cache[s] = True
             return True
         else:
-
             return False
 
 
