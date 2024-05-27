@@ -78,6 +78,7 @@ class RecursiveParser:
         if s is None or len(s) == 0:
             return False
         elif s == "i":
+            self.cache[s] = True
             return True
         elif s[0] == "(" and s[-1] == ")":
             substring = s[1:-1]
@@ -89,6 +90,7 @@ class RecursiveParser:
         if s is None or len(s) == 0:
             return False
         elif s == "*" or s == "/":
+            self.cache[s] = True
             return True
         else:
             return False
