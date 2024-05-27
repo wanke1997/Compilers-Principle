@@ -1,6 +1,1 @@
-#include <stdio.h>
-
-int AbCDe34T;
-// this is an explanation.
-/* this is another explanation. */ float b;
-double DDe2;
+i=i*i+i+(i+(i+i/i))
