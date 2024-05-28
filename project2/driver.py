@@ -9,6 +9,10 @@ DEFAULT_TESTCASE_DIR = "input"
 
 class RecursiveParser:
     def __init__(self, filepath: Path) -> None:
+        self.read_file(filepath)
+        self.cache: Dict[str, bool] = {}
+    
+    def read_file(self, filepath: Path) -> None:
         f = open(filepath, "r")
         self.string = ""
         pattern = r"'[^']*'"
@@ -19,7 +23,6 @@ class RecursiveParser:
                 self.string += match_string[1 : len(match_string) - 1]
             read_string = f.readline()
         f.close()
-        self.cache: Dict[str, bool] = {}
 
     def A(self) -> bool:
         s = self.string
