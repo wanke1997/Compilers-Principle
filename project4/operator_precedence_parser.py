@@ -166,25 +166,25 @@ class OperatorPrecedenceParser:
         stack = []
         stack.append("#")
         start = 0
-        cur_operator = 0
+        cur_operator_idx = 0
 
         while stack and pt < len(string):
-            key = (stack[cur_operator], string[pt])
+            key = (stack[cur_operator_idx], string[pt])
             print("stack: {}, cur_ch: {}".format(stack, string[pt]))
             if key not in self.chart:
                 raise Exception("error: no such compare relationship: {}".format(key))
             elif self.chart[key] == "<":
                 # if S[start] < string[pt], it means that we haven't found the start of handle yet
                 stack.append(string[pt])
-                # update the value of start and cur_operator index
-                if cur_operator > start:
-                    start = cur_operator
-                cur_operator = len(stack) - 1
+                # update the value of start and cur_operator_idx
+                if cur_operator_idx > start:
+                    start = cur_operator_idx
+                cur_operator_idx = len(stack) - 1
                 pt += 1
             elif self.chart[key] == "=":
                 # if S[start] = string[pt], it means that the handle already started, but not ended
                 stack.append(string[pt])
-                cur_operator = len(stack) - 1
+                cur_operator_idx = len(stack) - 1
                 pt += 1
             else:
                 # if S[start] < string[pt], it means that the last character is the end of handle.
@@ -197,16 +197,16 @@ class OperatorPrecedenceParser:
                 # reduce the sentence and add it to stack
                 reduced_sentence = self.reduce_sentence(sentence)
                 stack.extend([ch for ch in reduced_sentence])
-                # reset the start and cur_operator index
+                # reset the start and cur_operator_idx index
                 operators = self._find_operators_helper(stack)
                 if len(operators) == 0:
                     raise Exception("error: the stack doesn't have operators")
                 elif len(operators) == 1:
-                    cur_operator = start = operators[0][0]
+                    cur_operator_idx = start = operators[0][0]
                 else:
                     # find the last position such that prev_str < cur_str
                     # in this case, prev_idx will be the updated start, and
-                    # cur_idx will be the updated cur_operator
+                    # cur_idx will be the updated cur_operator_idx
                     for i in range(len(operators) - 2, -1, -1):
                         prev_idx, prev_str = operators[i]
                         cur_idx, cur_str = operators[i + 1]
@@ -214,7 +214,7 @@ class OperatorPrecedenceParser:
                             continue
                         elif self.chart[(prev_str, cur_str)] == "<":
                             start = prev_idx
-                            cur_operator = cur_idx
+                            cur_operator_idx = cur_idx
                             break
                         else:
                             raise Exception("error: operations in stack have errors. Please check. {}".format(stack))
