@@ -187,6 +187,7 @@ class LL1Parser:
         pt = 0
 
         while stack and pt < len(appended_string):
+            print("stack: {}, string: {}".format(stack, appended_string[pt:]))
             X = stack[-1]
             a = appended_string[pt]
             # case1: X is non-terminal
