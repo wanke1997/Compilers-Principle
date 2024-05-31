@@ -6,6 +6,7 @@ from typing import Dict, List, Set, Tuple
 CURRENT_FILE_PATH = pathlib.Path(__file__).parent.resolve()
 DEFAULT_TESTCASE_DIR = "input"
 
+
 class SLR1Parser:
     def __init__(self) -> None:
         # self.start = "A"
@@ -26,7 +27,11 @@ class SLR1Parser:
         self.VT: Set[str] = set()
         self.VN: Set[str] = set()
         self.states: Dict[int, List[str]] = {}
+        self.first_dict: Dict[str, Set[str]] = {}
+        self.follow_dict: Dict[str, Set[str]] = {}
         self.preprocess()
+        self.get_first_set()
+        self.get_follow_set()
 
     def read_file(self, filepath: Path) -> str:
         f = open(filepath, "r")
@@ -40,7 +45,7 @@ class SLR1Parser:
             read_string = f.readline()
         f.close()
         return string
-    
+
     def preprocess(self) -> None:
         # build VT and VN set
         for key, values in self.grammar.items():
@@ -51,29 +56,29 @@ class SLR1Parser:
                         self.VN.add(ch)
                     else:
                         self.VT.add(ch)
-    
+
     def build_initial_items(self, left: str) -> Set[str]:
         """
-        Build an initial item set such as A->.B, which the left part is provided, and the 
+        Build an initial item set such as A->.B, which the left part is provided, and the
         position of dot is set to initial state on the right part of the sentence.
 
         Args:
             left (str): the left side of the sentence, such as S, E, F, T, etc
-        
+
         Returns:
             Set (str): a set of initial items whose left part is $left variable
-        
+
         """
         res: Set[str] = set()
         for key, values in self.grammar.items():
-            if key!=left:
+            if key != left:
                 continue
             else:
                 for value in values:
-                    s = "{}->.{}".format(key,value)
+                    s = "{}->.{}".format(key, value)
                     res.add(s)
         return res
-    
+
     def get_next_item(self, item: str) -> Tuple[str, str]:
         """
         Move the dot forward by 1 position. For example, if the input is
@@ -81,40 +86,39 @@ class SLR1Parser:
 
         Args:
             item (str): the item sentence provided
-        
+
         Returns:
-            Tuple[str, str]: the item sentence whose dot is moved forward by 1 position, 
+            Tuple[str, str]: the item sentence whose dot is moved forward by 1 position,
             and the last read character
 
         """
-        if item is None or len(item)<=2:
+        if item is None or len(item) <= 2:
             raise Exception("error: the input item has issues.")
-        if item.count(".")>1:
+        if item.count(".") > 1:
             raise Exception("error: the number of dot in the item {} is greater than 1. ".format(item))
         split_res = item.split(".")
-        if split_res[1] is None or len(split_res[1])==0:
+        if split_res[1] is None or len(split_res[1]) == 0:
             return item
         else:
-            read = split_res[0]+split_res[1][:1]
+            read = split_res[0] + split_res[1][:1]
             todo = split_res[1][1:]
-            res = read+"."+todo
+            res = read + "." + todo
             return res, read[-1]
-    
+
     def build_closure(self, item: str) -> Set[str]:
         res: Set[str] = set()
         res.add(item)
         idx = item.index(".")
-        if idx+1 == len(item):
+        if idx + 1 == len(item):
             return res
-        elif item[idx+1] in self.VT or item.split("->")[0] == item[idx+1]:
+        elif item[idx + 1] in self.VT or item.split("->")[0] == item[idx + 1]:
             return res
         else:
-            next_items = self.build_initial_items(item[idx+1])
+            next_items = self.build_initial_items(item[idx + 1])
             res |= next_items
             for next_item in next_items:
                 res |= self.build_closure(next_item)
             return res
-
 
     # def build_closure_state(self, state_idx: int) -> Set[str]:
     #     items: Set[str] = set()
@@ -124,7 +128,7 @@ class SLR1Parser:
     #         items |= self.build_closure(item)
     #     self.states[state_idx] = items
     #     return items
-    
+
     def go(self, state_idx: int, input: str) -> int:
         state: Set[str] = self.states[state_idx]
         total = len(self.states)
@@ -138,6 +142,79 @@ class SLR1Parser:
         self.states[total] = items
         return total
 
+    def get_first_set(self) -> None:
+        self.first_dict = {s: set() for s in (self.VT | self.VN)}
+        # 1. calculate first set for terminals
+        for x in self.VT:
+            self.first_dict[x].add(x)
+        # 2. calculate first set for x->aX, which a is a terminal
+        for x, right in self.grammar.items():
+            for r in right:
+                if r[0] in self.VT:
+                    self.first_dict[x].add(r[0])
+        # 3. calculate first set for normal cases
+        set_updated = True
+        while set_updated:
+            set_updated = False
+            for x, right in self.grammar.items():
+                if x in self.VT:
+                    continue
+                for r in right:
+                    if r[0] in self.VT:
+                        continue
+                    # rule 3.1
+                    prev_len = len(self.first_dict[x])
+                    self.first_dict[x] |= self.first_dict[r[0]] - {"e"}
+                    if len(self.first_dict[x]) > prev_len:
+                        set_updated = True
+                    # rule 3.2
+                    for i in range(1, len(r)):
+                        if r[i - 1] not in self.VN or "e" not in self.first_dict[r[i - 1]]:
+                            break
+                        else:
+                            prev_len = len(self.first_dict[x])
+                            self.first_dict[x] |= self.first_dict[r[i]] - {"e"}
+                            if len(self.first_dict[x]) > prev_len:
+                                set_updated = True
+                    # rule 3.3
+                    add_e = sum([1 if r[i] in self.VN and "e" in self.first_dict[r[i]] else 0 for i in range(len(r))]) == len(r)
+                    if add_e == True:
+                        prev_len = len(self.first_dict[x])
+                        self.first_dict[x].add("e")
+                        if len(self.first_dict[x]) > prev_len:
+                            set_updated = True
+
+    def get_follow_set(self) -> None:
+        self.follow_dict = {s: set() for s in (self.VN)}
+        # rule 1
+        self.follow_dict[self.start].add("#")
+        # rule 2 and rule 3 iteration
+        set_updated = True
+        while set_updated:
+            set_updated = False
+            for x, right in self.grammar.items():
+                if x not in self.VN:
+                    continue
+                for r in right:
+                    # rule 2
+                    if len(r) >= 2 and r[-1] != "e" and r[-2] in self.VN:
+                        prev_len = len(self.follow_dict[r[-2]])
+                        self.follow_dict[r[-2]] |= self.first_dict[r[-1]] - {"e"}
+                        if len(self.follow_dict[r[-2]]) > prev_len:
+                            set_updated = True
+                    # rule 3.1
+                    if len(r) >= 1 and r[-1] in self.VN:
+                        prev_len = len(self.follow_dict[r[-1]])
+                        self.follow_dict[r[-1]] |= self.follow_dict[x]
+                        if len(self.follow_dict[r[-1]]) > prev_len:
+                            set_updated = True
+                    # rule 3.2
+                    if len(r) >= 2 and r[-2] in self.VN and "e" in self.first_dict[r[-1]]:
+                        prev_len = len(self.follow_dict[r[-2]])
+                        self.follow_dict[r[-2]] |= self.follow_dict[x]
+                        if len(self.follow_dict[r[-2]]) > prev_len:
+                            set_updated = True
+
 
 if __name__ == "__main__":
     parser = SLR1Parser()
@@ -146,7 +223,5 @@ if __name__ == "__main__":
     string = parser.read_file(filepath)
     print("The input string is: {}".format(string))
 
-    item = "E->E+.T"
-    parser.states[0] = parser.build_closure(item)
-    next_state_idx = parser.go(0, "T")
-    print(next_state_idx, parser.states[next_state_idx])
+    print(parser.first_dict)
+    print(parser.follow_dict)
