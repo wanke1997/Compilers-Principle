@@ -1,7 +1,7 @@
 from pathlib import Path
 import re
 import pathlib
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set, Tuple, Optional
 
 CURRENT_FILE_PATH = pathlib.Path(__file__).parent.resolve()
 DEFAULT_TESTCASE_DIR = "input"
@@ -24,14 +24,17 @@ class SLR1Parser:
             "T": ["T*F", "F"],
             "F": ["(E)", "i"],
         }
+        self.reverse_grammar: Dict[str, int] = {}
         self.VT: Set[str] = set()
         self.VN: Set[str] = set()
-        self.states: Dict[int, List[str]] = {}
+        self.states: Dict[int, Set[str]] = {}
+        self.state_chart: Dict[Tuple[int, str], int] = {}
         self.first_dict: Dict[str, Set[str]] = {}
         self.follow_dict: Dict[str, Set[str]] = {}
         self.preprocess()
         self.get_first_set()
         self.get_follow_set()
+        self.build_state_chart()
 
     def read_file(self, filepath: Path) -> str:
         f = open(filepath, "r")
@@ -48,9 +51,14 @@ class SLR1Parser:
 
     def preprocess(self) -> None:
         # build VT and VN set
+        # flatten the grammar as strings
+        cnt = 0
         for key, values in self.grammar.items():
             self.VN.add(key)
             for value in values:
+                string = "{}->{}".format(key, value)
+                self.reverse_grammar[string] = cnt
+                cnt += 1
                 for ch in value:
                     if ch.isupper():
                         self.VN.add(ch)
@@ -130,7 +138,7 @@ class SLR1Parser:
                         if len(self.follow_dict[r[-2]]) > prev_len:
                             set_updated = True
 
-    def build_initial_items(self, left: str) -> Set[str]:
+    def _build_initial_items(self, left: str) -> Set[str]:
         """
         Build an initial item set such as A->.B, which the left part is provided, and the
         position of dot is set to initial state on the right part of the sentence.
@@ -152,7 +160,7 @@ class SLR1Parser:
                     res.add(s)
         return res
 
-    def get_next_item(self, item: str) -> Tuple[str, str]:
+    def _get_next_item(self, item: str) -> Tuple[str, str]:
         """
         Move the dot forward by 1 position. For example, if the input is
         A->B.*C, then the output will be A->B*.C
@@ -171,14 +179,14 @@ class SLR1Parser:
             raise Exception("error: the number of dot in the item {} is greater than 1. ".format(item))
         split_res = item.split(".")
         if split_res[1] is None or len(split_res[1]) == 0:
-            return item
+            return item, ""
         else:
             read = split_res[0] + split_res[1][:1]
             todo = split_res[1][1:]
             res = read + "." + todo
             return res, read[-1]
 
-    def build_closure(self, item: str) -> Set[str]:
+    def _build_closure(self, item: str) -> Set[str]:
         res: Set[str] = set()
         res.add(item)
         idx = item.index(".")
@@ -187,33 +195,56 @@ class SLR1Parser:
         elif item[idx + 1] in self.VT or item.split("->")[0] == item[idx + 1]:
             return res
         else:
-            next_items = self.build_initial_items(item[idx + 1])
+            next_items = self._build_initial_items(item[idx + 1])
             res |= next_items
             for next_item in next_items:
-                res |= self.build_closure(next_item)
+                res |= self._build_closure(next_item)
             return res
 
-    # def build_closure_state(self, state_idx: int) -> Set[str]:
-    #     items: Set[str] = set()
-    #     state: Set[str] = self.states[state_idx]
-    #     items |= state
-    #     for item in state:
-    #         items |= self.build_closure(item)
-    #     self.states[state_idx] = items
-    #     return items
-
-    def go(self, state_idx: int, input: str) -> int:
+    def _goto(self, state_idx: int, input: str) -> int:
         state: Set[str] = self.states[state_idx]
         total = len(self.states)
         items: Set[str] = set()
         for item in state:
-            next_item, last_chr = self.get_next_item(item)
+            next_item, last_chr = self._get_next_item(item)
             if last_chr == input:
                 items.add(next_item)
-                next_item_closure = self.build_closure(next_item)
+                next_item_closure = self._build_closure(next_item)
                 items |= next_item_closure
         self.states[total] = items
+        self.state_chart[(state_idx, input)] = total
         return total
+
+    def _find_item_state(self, item: str) -> Optional[int]:
+        for idx, items in self.states.items():
+            if item in items:
+                return idx
+        return None
+
+    def _build_states(self, state_idx: int) -> None:
+        state: Set[str] = self.states[state_idx]
+        for item in state:
+            if item[-1] == ".":
+                continue
+            else:
+                potencial_next_idx = self._find_item_state(self._get_next_item(item)[0])
+                if potencial_next_idx is not None:
+                    self.state_chart[(state_idx, item[item.index(".") + 1])] = potencial_next_idx
+                    # add the result to self.state_chart
+                else:
+                    dot_idx = item.index(".")
+                    next_idx = self._goto(state_idx, item[dot_idx + 1])
+                    self._build_states(next_idx)
+
+    def build_state_chart(self) -> None:
+        # initialize start point
+        start_item: Set[str] = self._build_initial_items(self.start)
+        if start_item is None or len(start_item) != 1:
+            raise Exception("error: there is an error with self.start. Please check again")
+        start_closure = self._build_closure(list(start_item)[0])
+        self.states[0] = start_closure
+        # start loop to find all states
+        self._build_states(state_idx=0)
 
 
 if __name__ == "__main__":
@@ -221,7 +252,8 @@ if __name__ == "__main__":
     testcase = "test_case1.txt"
     filepath = Path(CURRENT_FILE_PATH).joinpath(DEFAULT_TESTCASE_DIR).joinpath(testcase)
     string = parser.read_file(filepath)
-    print("The input string is: {}".format(string))
-
-    print(parser.first_dict)
-    print(parser.follow_dict)
+    # print("The input string is: {}".format(string))
+    print(len(parser.states))
+    print(len(parser.state_chart))
+    for (state, input), value in parser.state_chart.items():
+        print("{}, {} : {}".format(state, input, value))
