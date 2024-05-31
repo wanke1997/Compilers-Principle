@@ -16,8 +16,8 @@ class OperatorPrecedenceParser:
             "F": ["(E)", "i"],
         }
         self.reversed_grammar: Dict[str, str] = {}
-        self.VT = set()
-        self.VN = set()
+        self.VT: Set[str] = set()
+        self.VN: Set[str] = set()
         self.FirstVT: Dict[str, Set[str]] = {}
         self.LastVT: Dict[str, Set[str]] = {}
         self.chart: Dict[Tuple[str, str], str] = {}

@@ -9,21 +9,21 @@ DEFAULT_TESTCASE_DIR = "input"
 
 class SLR1Parser:
     def __init__(self) -> None:
-        # self.start = "A"
-        # self.grammar: Dict[str, List[str]] = {
-        #     "A": ["V=E"],
-        #     "E": ["E+T", "E-T", "T"],
-        #     "T": ["T*F", "T/F", "F"],
-        #     "F": ["(E)", "i"],
-        #     "V": ["i"],
-        # }
-        self.start = "S"
+        self.start = "A"
         self.grammar: Dict[str, List[str]] = {
-            "S": ["E"],
-            "E": ["E+T", "T"],
-            "T": ["T*F", "F"],
+            "A": ["V=E"],
+            "E": ["E+T", "E-T", "T"],
+            "T": ["T*F", "T/F", "F"],
             "F": ["(E)", "i"],
+            "V": ["i"],
         }
+        # self.start = "S"
+        # self.grammar: Dict[str, List[str]] = {
+        #     "S": ["E"],
+        #     "E": ["E+T", "T"],
+        #     "T": ["T*F", "F"],
+        #     "F": ["(E)", "i"],
+        # }
         self.grammar_idx: Dict[str, int] = {}
         self.reversed_grammar: Dict[str, str] = {}
         self.VT: Set[str] = set()
@@ -129,12 +129,12 @@ class SLR1Parser:
                     # rule 2
                     if len(r) >= 2:
                         for idx, ch in enumerate(r):
-                            if ch not in self.VN or idx==len(r)-1:
+                            if ch not in self.VN or idx == len(r) - 1:
                                 continue
                             else:
-                                next_ch = r[idx+1]
+                                next_ch = r[idx + 1]
                                 prev_len = len(self.follow_dict[ch])
-                                self.follow_dict[ch] |= (self.first_dict[next_ch]-{"e"})
+                                self.follow_dict[ch] |= self.first_dict[next_ch] - {"e"}
                                 if len(self.follow_dict[ch]) > prev_len:
                                     set_updated = True
                     # rule 3.1
@@ -146,41 +146,15 @@ class SLR1Parser:
                     # rule 3.2
                     if len(r) >= 2:
                         for idx, ch in enumerate(r):
-                            if ch not in self.VN or idx==len(r)-1:
+                            if ch not in self.VN or idx == len(r) - 1:
                                 continue
                             else:
-                                next_ch = r[idx+1]
+                                next_ch = r[idx + 1]
                                 if "e" in self.first_dict[next_ch]:
                                     prev_len = len(self.follow_dict[ch])
                                     self.follow_dict[ch] |= self.follow_dict[x]
                                     if len(self.follow_dict[ch]) > prev_len:
                                         set_updated = True
-    def reduce_sentence(self, input: str) -> str:
-        # hard coded, if use another grammar, then we need to rewrite this method
-        if input is None or len(input) == 0:
-            raise Exception("error: the input string is empty.")
-        elif len(input) == 1:
-            if input in {"i", "F", "T"}:
-                return self.reversed_grammar[input]
-            elif input == "E":
-                return "E"
-            else:
-                raise Exception("error: unexpected character, {}".format(input))
-        elif len(input) == 3:
-            if input[1] == "+" and input[0] in self.VN and input[2] in self.VN:
-                return self.reversed_grammar["E+T"]
-            elif input[1] == "-" and input[0] in self.VN and input[2] in self.VN:
-                return self.reversed_grammar["E-T"]
-            elif input[1] == "*" and input[0] in self.VN and input[2] in self.VN:
-                return self.reversed_grammar["T*F"]
-            elif input[1] == "/" and input[0] in self.VN and input[2] in self.VN:
-                return self.reversed_grammar["T/F"]
-            elif input[0] == "(" and input[2] == ")" and input[1] in self.VN:
-                return self.reversed_grammar["(E)"]
-            else:
-                raise Exception("error: unexpected character, {}".format(input))
-        else:
-            raise Exception("error: unexpected character, {}".format(input))
 
     def _build_initial_items(self, left: str) -> Set[str]:
         """
@@ -245,30 +219,12 @@ class SLR1Parser:
                 res |= self._build_closure(next_item)
             return res
 
-    def _go(self, state_idx: int, input: str) -> int:
-        state: Set[str] = self.states[state_idx]
-        total = len(self.states)
-        items: Set[str] = set()
-        for item in state:
-            next_item, last_chr = self._get_next_item(item)
-            if last_chr == input:
-                items.add(next_item)
-                next_item_closure = self._build_closure(next_item)
-                items |= next_item_closure
-        self.states[total] = items
-        if input in self.VN:
-            print("####", str((state_idx, input)), str(total))
-            self.goto_chart[(state_idx, input)] = total
-        else:
-            self.action_chart[(state_idx, input)] = "S{}".format(total)
-        return total
-
-    def _find_item_state(self, item: str) -> Optional[int]:
+    def _find_items_state(self, target_items: Set[str]) -> Optional[int]:
         for idx, items in self.states.items():
-            if item in items:
+            if target_items == items:
                 return idx
         return None
-    
+
     def _find_terminal_item(self, idx: int) -> Optional[str]:
         for item in self.states[idx]:
             if item[-1] == ".":
@@ -280,39 +236,36 @@ class SLR1Parser:
             if value == idx:
                 return key
         return ""
-    
-    # def _find_set_index(self, dict: Dict[str, Set[str]], next_chr: str) -> Optional[int]:
-    #     set = dict[next_chr]
 
-
-    def _build_states(self, state_idx: int) -> None:
+    def _go(self, state_idx: int) -> None:
         state: Set[str] = self.states[state_idx]
-        # dict: Dict[str, Set[str]] = {}
-        # for item in state:
-        #     next_chr = item[item.index(".") + 1]
-        #     next_item = self._get_next_item(item)[0]
-        #     if next_chr in dict:
-        #         dict[next_chr].add(next_item)
-        #     else:
-        #         dict[next_chr] = {next_item}
-
+        cache: Dict[str, Set[str]] = {}
         for item in state:
             if item[-1] == ".":
                 continue
+            next_chr = item[item.index(".") + 1]
+            next_item = self._get_next_item(item)[0]
+            closure = self._build_closure(next_item)
+            if next_chr in cache:
+                cache[next_chr] |= closure
             else:
-                next_chr = item[item.index(".") + 1]
-                potencial_next_idx = self._find_item_state(self._get_next_item(item)[0])
-                if potencial_next_idx is not None:
-                    
-                    if next_chr in self.VN:
-                        print("####", str((state_idx, input)), str(potencial_next_idx))
-                        self.goto_chart[(state_idx, next_chr)] = potencial_next_idx
-                    else:
-                        self.action_chart[(state_idx, next_chr)] = "S{}".format(potencial_next_idx)
+                cache[next_chr] = set(closure)
+
+        for input_chr, items in cache.items():
+            next_idx = self._find_items_state(items)
+            if next_idx is None:
+                next_idx = len(self.states)
+                self.states[next_idx] = items
+                if input_chr in self.VT:
+                    self.action_chart[(state_idx, input_chr)] = "S{}".format(next_idx)
                 else:
-                    dot_idx = item.index(".")
-                    next_idx = self._go(state_idx, item[dot_idx + 1])
-                    self._build_states(next_idx)
+                    self.goto_chart[(state_idx, input_chr)] = next_idx
+                self._go(next_idx)
+            else:
+                if input_chr in self.VT:
+                    self.action_chart[(state_idx, input_chr)] = "S{}".format(next_idx)
+                else:
+                    self.goto_chart[(state_idx, input_chr)] = next_idx
 
     def build_dfa(self) -> None:
         # initialize start point
@@ -322,7 +275,7 @@ class SLR1Parser:
         start_closure = self._build_closure(list(start_item)[0])
         self.states[0] = start_closure
         # start loop to find all states
-        self._build_states(state_idx=0)
+        self._go(state_idx=0)
         for idx in range(len(self.states)):
             T_item = self._find_terminal_item(idx)
             if T_item is None:
@@ -356,10 +309,10 @@ class SLR1Parser:
                 idx = int(action[1:])
                 terminal_item = self._find_grammar(idx)
                 length = len(terminal_item.split("->")[1])
-                sign_stack = sign_stack[:len(sign_stack)-length]
+                sign_stack = sign_stack[: len(sign_stack) - length]
                 sign_stack += terminal_item.split("->")[0]
                 # 2. pop the current state
-                state_stack = state_stack[:len(state_stack)-length]
+                state_stack = state_stack[: len(state_stack) - length]
                 # 3. call goto to get next state
                 next_state = self.goto_chart[(state_stack[-1], sign_stack[-1])]
                 # 4. update the next state
@@ -368,7 +321,7 @@ class SLR1Parser:
                 return True
             else:
                 raise Exception("error: action {} error".format(action))
-            print("#"*30)
+            print("#" * 30)
         return False
 
 
@@ -377,11 +330,5 @@ if __name__ == "__main__":
     testcase = "test_case1.txt"
     filepath = Path(CURRENT_FILE_PATH).joinpath(DEFAULT_TESTCASE_DIR).joinpath(testcase)
     string = parser.read_file(filepath)
-    # for key, value in parser.action_chart.items():
-    #     print(key, value)
-    # for key, value in parser.goto_chart.items():
-    #     print(key, value)
-    for key, value in parser.states.items():
-        print(key, value)
     res = parser.parse(filepath)
     print(res)
