@@ -57,6 +57,79 @@ class SLR1Parser:
                     else:
                         self.VT.add(ch)
 
+    def get_first_set(self) -> None:
+        self.first_dict = {s: set() for s in (self.VT | self.VN)}
+        # 1. calculate first set for terminals
+        for x in self.VT:
+            self.first_dict[x].add(x)
+        # 2. calculate first set for x->aX, which a is a terminal
+        for x, right in self.grammar.items():
+            for r in right:
+                if r[0] in self.VT:
+                    self.first_dict[x].add(r[0])
+        # 3. calculate first set for normal cases
+        set_updated = True
+        while set_updated:
+            set_updated = False
+            for x, right in self.grammar.items():
+                if x in self.VT:
+                    continue
+                for r in right:
+                    if r[0] in self.VT:
+                        continue
+                    # rule 3.1
+                    prev_len = len(self.first_dict[x])
+                    self.first_dict[x] |= self.first_dict[r[0]] - {"e"}
+                    if len(self.first_dict[x]) > prev_len:
+                        set_updated = True
+                    # rule 3.2
+                    for i in range(1, len(r)):
+                        if r[i - 1] not in self.VN or "e" not in self.first_dict[r[i - 1]]:
+                            break
+                        else:
+                            prev_len = len(self.first_dict[x])
+                            self.first_dict[x] |= self.first_dict[r[i]] - {"e"}
+                            if len(self.first_dict[x]) > prev_len:
+                                set_updated = True
+                    # rule 3.3
+                    add_e = sum([1 if r[i] in self.VN and "e" in self.first_dict[r[i]] else 0 for i in range(len(r))]) == len(r)
+                    if add_e == True:
+                        prev_len = len(self.first_dict[x])
+                        self.first_dict[x].add("e")
+                        if len(self.first_dict[x]) > prev_len:
+                            set_updated = True
+
+    def get_follow_set(self) -> None:
+        self.follow_dict = {s: set() for s in (self.VN)}
+        # rule 1
+        self.follow_dict[self.start].add("#")
+        # rule 2 and rule 3 iteration
+        set_updated = True
+        while set_updated:
+            set_updated = False
+            for x, right in self.grammar.items():
+                if x not in self.VN:
+                    continue
+                for r in right:
+                    # rule 2
+                    if len(r) >= 2 and r[-1] != "e" and r[-2] in self.VN:
+                        prev_len = len(self.follow_dict[r[-2]])
+                        self.follow_dict[r[-2]] |= self.first_dict[r[-1]] - {"e"}
+                        if len(self.follow_dict[r[-2]]) > prev_len:
+                            set_updated = True
+                    # rule 3.1
+                    if len(r) >= 1 and r[-1] in self.VN:
+                        prev_len = len(self.follow_dict[r[-1]])
+                        self.follow_dict[r[-1]] |= self.follow_dict[x]
+                        if len(self.follow_dict[r[-1]]) > prev_len:
+                            set_updated = True
+                    # rule 3.2
+                    if len(r) >= 2 and r[-2] in self.VN and "e" in self.first_dict[r[-1]]:
+                        prev_len = len(self.follow_dict[r[-2]])
+                        self.follow_dict[r[-2]] |= self.follow_dict[x]
+                        if len(self.follow_dict[r[-2]]) > prev_len:
+                            set_updated = True
+
     def build_initial_items(self, left: str) -> Set[str]:
         """
         Build an initial item set such as A->.B, which the left part is provided, and the
@@ -141,79 +214,6 @@ class SLR1Parser:
                 items |= next_item_closure
         self.states[total] = items
         return total
-
-    def get_first_set(self) -> None:
-        self.first_dict = {s: set() for s in (self.VT | self.VN)}
-        # 1. calculate first set for terminals
-        for x in self.VT:
-            self.first_dict[x].add(x)
-        # 2. calculate first set for x->aX, which a is a terminal
-        for x, right in self.grammar.items():
-            for r in right:
-                if r[0] in self.VT:
-                    self.first_dict[x].add(r[0])
-        # 3. calculate first set for normal cases
-        set_updated = True
-        while set_updated:
-            set_updated = False
-            for x, right in self.grammar.items():
-                if x in self.VT:
-                    continue
-                for r in right:
-                    if r[0] in self.VT:
-                        continue
-                    # rule 3.1
-                    prev_len = len(self.first_dict[x])
-                    self.first_dict[x] |= self.first_dict[r[0]] - {"e"}
-                    if len(self.first_dict[x]) > prev_len:
-                        set_updated = True
-                    # rule 3.2
-                    for i in range(1, len(r)):
-                        if r[i - 1] not in self.VN or "e" not in self.first_dict[r[i - 1]]:
-                            break
-                        else:
-                            prev_len = len(self.first_dict[x])
-                            self.first_dict[x] |= self.first_dict[r[i]] - {"e"}
-                            if len(self.first_dict[x]) > prev_len:
-                                set_updated = True
-                    # rule 3.3
-                    add_e = sum([1 if r[i] in self.VN and "e" in self.first_dict[r[i]] else 0 for i in range(len(r))]) == len(r)
-                    if add_e == True:
-                        prev_len = len(self.first_dict[x])
-                        self.first_dict[x].add("e")
-                        if len(self.first_dict[x]) > prev_len:
-                            set_updated = True
-
-    def get_follow_set(self) -> None:
-        self.follow_dict = {s: set() for s in (self.VN)}
-        # rule 1
-        self.follow_dict[self.start].add("#")
-        # rule 2 and rule 3 iteration
-        set_updated = True
-        while set_updated:
-            set_updated = False
-            for x, right in self.grammar.items():
-                if x not in self.VN:
-                    continue
-                for r in right:
-                    # rule 2
-                    if len(r) >= 2 and r[-1] != "e" and r[-2] in self.VN:
-                        prev_len = len(self.follow_dict[r[-2]])
-                        self.follow_dict[r[-2]] |= self.first_dict[r[-1]] - {"e"}
-                        if len(self.follow_dict[r[-2]]) > prev_len:
-                            set_updated = True
-                    # rule 3.1
-                    if len(r) >= 1 and r[-1] in self.VN:
-                        prev_len = len(self.follow_dict[r[-1]])
-                        self.follow_dict[r[-1]] |= self.follow_dict[x]
-                        if len(self.follow_dict[r[-1]]) > prev_len:
-                            set_updated = True
-                    # rule 3.2
-                    if len(r) >= 2 and r[-2] in self.VN and "e" in self.first_dict[r[-1]]:
-                        prev_len = len(self.follow_dict[r[-2]])
-                        self.follow_dict[r[-2]] |= self.follow_dict[x]
-                        if len(self.follow_dict[r[-2]]) > prev_len:
-                            set_updated = True
 
 
 if __name__ == "__main__":
