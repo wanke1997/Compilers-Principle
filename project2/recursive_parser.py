@@ -8,30 +8,30 @@ DEFAULT_TESTCASE_DIR = "input"
 
 
 class RecursiveParser:
-    def __init__(self, filepath: Path) -> None:
-        self.read_file(filepath)
+    def __init__(self) -> None:
         self.cache: Dict[str, bool] = {}
-    
-    def read_file(self, filepath: Path) -> None:
+
+    def read_file(self, filepath: Path) -> str:
         f = open(filepath, "r")
-        self.string = ""
+        string = ""
         pattern = r"'[^']*'"
         read_string = f.readline()
         while read_string:
             match_string = re.findall(pattern, read_string)[0]
             if match_string is not None:
-                self.string += match_string[1 : len(match_string) - 1]
+                string += match_string[1 : len(match_string) - 1]
             read_string = f.readline()
         f.close()
+        return string
 
-    def A(self) -> bool:
-        s = self.string
-        if s is None or len(s) == 0:
+    def A(self, filepath: Path) -> bool:
+        string = self.read_file(filepath)
+        if string is None or len(string) == 0:
             return False
-        elif "=" in s and s.count("=") == 1:
-            idx = s.index("=")
-            res1 = self.V(s[:idx])
-            res2 = self.E(s[idx + 1 :])
+        elif "=" in string and string.count("=") == 1:
+            idx = string.index("=")
+            res1 = self.V(string[:idx])
+            res2 = self.E(string[idx + 1 :])
             return res1 and res2
         else:
             return False
@@ -141,7 +141,6 @@ if __name__ == "__main__":
     testcase = "test_case1.txt"
 
     filepath = Path(CURRENT_FILE_PATH).joinpath(DEFAULT_TESTCASE_DIR).joinpath(testcase)
-    recursive_parser = RecursiveParser(filepath)
-    print(recursive_parser.string)
-    result = recursive_parser.A()
+    recursive_parser = RecursiveParser()
+    result = recursive_parser.A(filepath)
     print("result is {}.".format(result))

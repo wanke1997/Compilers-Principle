@@ -8,7 +8,7 @@ DEFAULT_TESTCASE_DIR = "input"
 
 
 class LL1Parser:
-    def __init__(self, filepath: Path) -> None:
+    def __init__(self) -> None:
         self.start = "A"
         self.grammar: Dict[str, List[str]] = {
             "A": ["V=E"],
@@ -145,11 +145,16 @@ class LL1Parser:
                     continue
                 for r in right:
                     # rule 2
-                    if len(r) >= 2 and r[-1] != "e" and r[-2] in self.non_terminals:
-                        prev_len = len(self.follow_dict[r[-2]])
-                        self.follow_dict[r[-2]] |= self.first_dict[r[-1]] - {"e"}
-                        if len(self.follow_dict[r[-2]]) > prev_len:
-                            set_updated = True
+                    if len(r) >= 2:
+                        for idx, ch in enumerate(r):
+                            if ch not in self.non_terminals or idx == len(r) - 1:
+                                continue
+                            else:
+                                next_ch = r[idx + 1]
+                                prev_len = len(self.follow_dict[ch])
+                                self.follow_dict[ch] |= self.first_dict[next_ch] - {"e"}
+                                if len(self.follow_dict[ch]) > prev_len:
+                                    set_updated = True
                     # rule 3.1
                     if len(r) >= 1 and r[-1] in self.non_terminals:
                         prev_len = len(self.follow_dict[r[-1]])
@@ -157,11 +162,17 @@ class LL1Parser:
                         if len(self.follow_dict[r[-1]]) > prev_len:
                             set_updated = True
                     # rule 3.2
-                    if len(r) >= 2 and r[-2] in self.non_terminals and "e" in self.first_dict[r[-1]]:
-                        prev_len = len(self.follow_dict[r[-2]])
-                        self.follow_dict[r[-2]] |= self.follow_dict[x]
-                        if len(self.follow_dict[r[-2]]) > prev_len:
-                            set_updated = True
+                    if len(r) >= 2:
+                        for idx, ch in enumerate(r):
+                            if ch not in self.non_terminals or idx == len(r) - 1:
+                                continue
+                            else:
+                                next_ch = r[idx + 1]
+                                if "e" in self.first_dict[next_ch]:
+                                    prev_len = len(self.follow_dict[ch])
+                                    self.follow_dict[ch] |= self.follow_dict[x]
+                                    if len(self.follow_dict[ch]) > prev_len:
+                                        set_updated = True
 
     def build_chart(self) -> None:
         self.chart = {}
@@ -187,6 +198,7 @@ class LL1Parser:
         pt = 0
 
         while stack and pt < len(appended_string):
+            print("stack: {}, string: {}".format(stack, appended_string[pt:]))
             X = stack[-1]
             a = appended_string[pt]
             # case1: X is non-terminal
@@ -222,6 +234,6 @@ class LL1Parser:
 if __name__ == "__main__":
     testcase = "test_case1.txt"
     filepath = Path(CURRENT_FILE_PATH).joinpath(DEFAULT_TESTCASE_DIR).joinpath(testcase)
-    parser = LL1Parser(filepath)
+    parser = LL1Parser()
     res = parser.parse(filepath)
     print("Parse result is {}".format(res))
