@@ -416,13 +416,15 @@ class SLR1Parser:
                     quad_stack.append(self.quad_syntax_cnt)
                     self.quad_expressions.append("(=, X{}, _, X{})".format(prev, self.quad_syntax_cnt))
                     self.quad_syntax_cnt += 1
-                elif len(reduced_sentence)>=2 and reduced_sentence[-2] in self.operations:
+                elif len(reduced_sentence) >= 2 and reduced_sentence[-2] in self.operations:
                     prev2 = quad_stack.pop()
                     prev1 = quad_stack.pop()
                     quad_stack.append(self.quad_syntax_cnt)
-                    self.quad_expressions.append("({}, X{}, X{}, X{})".format(reduced_sentence[-2], prev1, prev2, self.quad_syntax_cnt))
+                    self.quad_expressions.append(
+                        "({}, X{}, X{}, X{})".format(reduced_sentence[-2], prev1, prev2, self.quad_syntax_cnt)
+                    )
                     self.quad_syntax_cnt += 1
-                elif len(reduced_sentence)>=2 and reduced_sentence[-2] == "=":
+                elif len(reduced_sentence) >= 2 and reduced_sentence[-2] == "=":
                     prev = quad_stack.pop()
                     quad_stack.append(self.quad_syntax_cnt)
                     self.quad_expressions.append("(=, X{}, _, X{})".format(prev, self.quad_syntax_cnt))
@@ -447,7 +449,7 @@ if __name__ == "__main__":
         print("The expression judge result is: False")
     else:
         print("The expression judge result is: {}".format(res))
-        print("#"*30)
+        print("#" * 30)
         for expression in parser.quad_expressions:
             print(expression)
-        print("The final result is stored in X{}".format(parser.quad_syntax_cnt-1))
+        print("The final result is stored in X{}".format(parser.quad_syntax_cnt - 1))
