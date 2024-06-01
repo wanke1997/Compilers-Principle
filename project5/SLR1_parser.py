@@ -10,6 +10,7 @@ DEFAULT_TESTCASE_DIR = "input"
 class SLR1Parser:
     def __init__(self) -> None:
         self.start = "A"
+        self.end = "i"
         self.grammar: Dict[str, List[str]] = {
             "A": ["V=E"],
             "E": ["E+T", "E-T", "T"],
@@ -17,7 +18,9 @@ class SLR1Parser:
             "F": ["(E)", "i"],
             "V": ["i"],
         }
+        self.operations = {"+", "-", "*", "/", "="}
         # self.start = "S"
+        # self.end = "i"
         # self.grammar: Dict[str, List[str]] = {
         #     "S": ["E"],
         #     "E": ["E+T", "T"],
@@ -33,6 +36,7 @@ class SLR1Parser:
         self.action_chart: Dict[Tuple[int, str], str] = {}
         self.first_dict: Dict[str, Set[str]] = {}
         self.follow_dict: Dict[str, Set[str]] = {}
+        self.quad_expression: List[str] = []
         self.preprocess()
         self.get_first_set()
         self.get_follow_set()
@@ -391,6 +395,24 @@ class SLR1Parser:
                 # 1. reduce
                 idx = int(action[1:])
                 terminal_item = self._find_grammar(idx)
+                res = terminal_item.split("->")
+                if res[1] == self.end:
+                    self.quad_expression.append("(=, {}, _, {})".format(res[1], res[0]))
+                for op in self.operations:
+                    if op not in res[1]:
+                        continue
+                    elif op!="=":
+                        print("res is {}".format(res))
+                        left = res[0]
+                        right = res[1]
+                        right_list = right.split(op)
+                        print("&&&& 1 {}, left is {}, item is {}, op is {}".format(right_list, left, terminal_item, op))
+                        self.quad_expression.append("({}, {}, {}, {})".format(op, right_list[0], right_list[1], left))
+                    else:
+                        right = terminal_item.split("->")[1]
+                        right_list = right.split(op)
+                        print("&&&& 2 {}".format(right_list))
+                        self.quad_expression.append("({}, {}, {}, {})".format(op, right_list[1], "_", right_list[0]))
                 length = len(terminal_item.split("->")[1])
                 sign_stack = sign_stack[: len(sign_stack) - length]
                 sign_stack += terminal_item.split("->")[0]
@@ -401,6 +423,8 @@ class SLR1Parser:
                 # 4. update the next state
                 state_stack.append(next_state)
             elif action == "acc":
+                right = self.grammar[self.start][0].split("=")
+                self.quad_expression.append("(=, {}, _, {})".format(right[1], right[0]))
                 return True
             else:
                 raise Exception("error: action {} error".format(action))
@@ -420,3 +444,4 @@ if __name__ == "__main__":
         print("False")
     else:
         print(res)
+        print(parser.quad_expression)
