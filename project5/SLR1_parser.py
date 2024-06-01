@@ -444,9 +444,9 @@ if __name__ == "__main__":
         res = parser.parse(filepath)
     except Exception as e:
         print("### {}".format(e))
-        print("False")
+        print("The expression judge result is: False")
     else:
-        print(res)
+        print("The expression judge result is: {}".format(res))
         print("#"*30)
         for expression in parser.quad_expressions:
             print(expression)

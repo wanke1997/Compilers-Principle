@@ -1,0 +1,196 @@
+status stack: [0]
+sign stack: #
+input string: i=i*i+i/(i+(i+i/i))#
+##############################
+status stack: [0, 18]
+sign stack: #i
+input string: =i*i+i/(i+(i+i/i))#
+##############################
+status stack: [0, 1]
+sign stack: #V
+input string: =i*i+i/(i+(i+i/i))#
+##############################
+status stack: [0, 1, 2]
+sign stack: #V=
+input string: i*i+i/(i+(i+i/i))#
+##############################
+status stack: [0, 1, 2, 8]
+sign stack: #V=i
+input string: *i+i/(i+(i+i/i))#
+##############################
+status stack: [0, 1, 2, 15]
+sign stack: #V=F
+input string: *i+i/(i+(i+i/i))#
+##############################
+status stack: [0, 1, 2, 17]
+sign stack: #V=T
+input string: *i+i/(i+(i+i/i))#
+##############################
+status stack: [0, 1, 2, 17, 13]
+sign stack: #V=T*
+input string: i+i/(i+(i+i/i))#
+##############################
+status stack: [0, 1, 2, 17, 13, 8]
+sign stack: #V=T*i
+input string: +i/(i+(i+i/i))#
+##############################
+status stack: [0, 1, 2, 17, 13, 14]
+sign stack: #V=T*F
+input string: +i/(i+(i+i/i))#
+##############################
+status stack: [0, 1, 2, 17]
+sign stack: #V=T
+input string: +i/(i+(i+i/i))#
+##############################
+status stack: [0, 1, 2, 3]
+sign stack: #V=E
+input string: +i/(i+(i+i/i))#
+##############################
+status stack: [0, 1, 2, 3, 4]
+sign stack: #V=E+
+input string: i/(i+(i+i/i))#
+##############################
+status stack: [0, 1, 2, 3, 4, 8]
+sign stack: #V=E+i
+input string: /(i+(i+i/i))#
+##############################
+status stack: [0, 1, 2, 3, 4, 15]
+sign stack: #V=E+F
+input string: /(i+(i+i/i))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5]
+sign stack: #V=E+T
+input string: /(i+(i+i/i))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6]
+sign stack: #V=E+T/
+input string: (i+(i+i/i))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9]
+sign stack: #V=E+T/(
+input string: i+(i+i/i))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 8]
+sign stack: #V=E+T/(i
+input string: +(i+i/i))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 15]
+sign stack: #V=E+T/(F
+input string: +(i+i/i))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 17]
+sign stack: #V=E+T/(T
+input string: +(i+i/i))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 10]
+sign stack: #V=E+T/(E
+input string: +(i+i/i))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 10, 4]
+sign stack: #V=E+T/(E+
+input string: (i+i/i))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 10, 4, 9]
+sign stack: #V=E+T/(E+(
+input string: i+i/i))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 10, 4, 9, 8]
+sign stack: #V=E+T/(E+(i
+input string: +i/i))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 10, 4, 9, 15]
+sign stack: #V=E+T/(E+(F
+input string: +i/i))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 10, 4, 9, 17]
+sign stack: #V=E+T/(E+(T
+input string: +i/i))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 10, 4, 9, 10]
+sign stack: #V=E+T/(E+(E
+input string: +i/i))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 10, 4, 9, 10, 4]
+sign stack: #V=E+T/(E+(E+
+input string: i/i))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 10, 4, 9, 10, 4, 8]
+sign stack: #V=E+T/(E+(E+i
+input string: /i))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 10, 4, 9, 10, 4, 15]
+sign stack: #V=E+T/(E+(E+F
+input string: /i))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 10, 4, 9, 10, 4, 5]
+sign stack: #V=E+T/(E+(E+T
+input string: /i))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 10, 4, 9, 10, 4, 5, 6]
+sign stack: #V=E+T/(E+(E+T/
+input string: i))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 10, 4, 9, 10, 4, 5, 6, 8]
+sign stack: #V=E+T/(E+(E+T/i
+input string: ))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 10, 4, 9, 10, 4, 5, 6, 7]
+sign stack: #V=E+T/(E+(E+T/F
+input string: ))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 10, 4, 9, 10, 4, 5]
+sign stack: #V=E+T/(E+(E+T
+input string: ))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 10, 4, 9, 10]
+sign stack: #V=E+T/(E+(E
+input string: ))#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 10, 4, 9, 10, 16]
+sign stack: #V=E+T/(E+(E)
+input string: )#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 10, 4, 15]
+sign stack: #V=E+T/(E+F
+input string: )#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 10, 4, 5]
+sign stack: #V=E+T/(E+T
+input string: )#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 10]
+sign stack: #V=E+T/(E
+input string: )#
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 9, 10, 16]
+sign stack: #V=E+T/(E)
+input string: #
+##############################
+status stack: [0, 1, 2, 3, 4, 5, 6, 7]
+sign stack: #V=E+T/F
+input string: #
+##############################
+status stack: [0, 1, 2, 3, 4, 5]
+sign stack: #V=E+T
+input string: #
+##############################
+status stack: [0, 1, 2, 3]
+sign stack: #V=E
+input string: #
+The expression judge result is: True
+##############################
+(=, X0, _, X1)
+(=, X2, _, X3)
+(=, X4, _, X5)
+(*, X3, X5, X6)
+(=, X7, _, X8)
+(=, X9, _, X10)
+(=, X11, _, X12)
+(=, X13, _, X14)
+(=, X15, _, X16)
+(/, X14, X16, X17)
+(+, X12, X17, X18)
+(+, X10, X18, X19)
+(/, X8, X19, X20)
+(+, X6, X20, X21)
+The final result is stored in X21
