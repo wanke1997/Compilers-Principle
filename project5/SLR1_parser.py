@@ -377,7 +377,11 @@ class SLR1Parser:
             print("input string: {}".format(string[pt:]))
             cur_state = state_stack[-1]
             cur_input = string[pt]
-            action = self.action_chart[(cur_state, cur_input)]
+            action = None
+            try:
+                action = self.action_chart[(cur_state, cur_input)]
+            except Exception:
+                raise Exception("error: index {} has an error with {}".format(pt, cur_input))
             if action.startswith("S"):
                 next_state = int(action[1:])
                 state_stack.append(next_state)
@@ -409,5 +413,10 @@ if __name__ == "__main__":
     testcase = "test_case1.txt"
     filepath = Path(CURRENT_FILE_PATH).joinpath(DEFAULT_TESTCASE_DIR).joinpath(testcase)
     string = parser.read_file(filepath)
-    res = parser.parse(filepath)
-    print(res)
+    try:
+        res = parser.parse(filepath)
+    except Exception as e:
+        print("### {}".format(e))
+        print("False")
+    else:
+        print(res)
