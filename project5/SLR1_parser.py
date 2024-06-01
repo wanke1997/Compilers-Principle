@@ -18,7 +18,7 @@ class SLR1Parser:
             "F": ["(E)", "i"],
             "V": ["i"],
         }
-        self.operations = {"+", "-", "*", "/", "="}
+        self.operations = {"+", "-", "*", "/"}
         # self.start = "S"
         # self.end = "i"
         # self.grammar: Dict[str, List[str]] = {
@@ -36,7 +36,8 @@ class SLR1Parser:
         self.action_chart: Dict[Tuple[int, str], str] = {}
         self.first_dict: Dict[str, Set[str]] = {}
         self.follow_dict: Dict[str, Set[str]] = {}
-        self.quad_expression: List[str] = []
+        self.quad_expressions: List[str] = []
+        self.quad_syntax_cnt = 0
         self.preprocess()
         self.get_first_set()
         self.get_follow_set()
@@ -375,6 +376,7 @@ class SLR1Parser:
         pt = 0
         state_stack = [0]
         sign_stack = "#"
+        quad_stack: List[int] = []
         while pt < len(string):
             print("status stack: {}".format(state_stack))
             print("sign stack: {}".format(sign_stack))
@@ -387,6 +389,9 @@ class SLR1Parser:
             except Exception:
                 raise Exception("error: index {} has an error with {}".format(pt, cur_input))
             if action.startswith("S"):
+                if cur_input == "i":
+                    quad_stack.append(self.quad_syntax_cnt)
+                    self.quad_syntax_cnt += 1
                 next_state = int(action[1:])
                 state_stack.append(next_state)
                 sign_stack += cur_input
@@ -395,25 +400,8 @@ class SLR1Parser:
                 # 1. reduce
                 idx = int(action[1:])
                 terminal_item = self._find_grammar(idx)
-                res = terminal_item.split("->")
-                if res[1] == self.end:
-                    self.quad_expression.append("(=, {}, _, {})".format(res[1], res[0]))
-                for op in self.operations:
-                    if op not in res[1]:
-                        continue
-                    elif op!="=":
-                        print("res is {}".format(res))
-                        left = res[0]
-                        right = res[1]
-                        right_list = right.split(op)
-                        print("&&&& 1 {}, left is {}, item is {}, op is {}".format(right_list, left, terminal_item, op))
-                        self.quad_expression.append("({}, {}, {}, {})".format(op, right_list[0], right_list[1], left))
-                    else:
-                        right = terminal_item.split("->")[1]
-                        right_list = right.split(op)
-                        print("&&&& 2 {}".format(right_list))
-                        self.quad_expression.append("({}, {}, {}, {})".format(op, right_list[1], "_", right_list[0]))
-                length = len(terminal_item.split("->")[1])
+                reduced_sentence = terminal_item.split("->")[1]
+                length = len(reduced_sentence)
                 sign_stack = sign_stack[: len(sign_stack) - length]
                 sign_stack += terminal_item.split("->")[0]
                 # 2. pop the current state
@@ -422,9 +410,24 @@ class SLR1Parser:
                 next_state = self.goto_chart[(state_stack[-1], sign_stack[-1])]
                 # 4. update the next state
                 state_stack.append(next_state)
+                # 5. update quad expressions
+                if reduced_sentence[-1] == "i":
+                    prev = quad_stack.pop()
+                    quad_stack.append(self.quad_syntax_cnt)
+                    self.quad_expressions.append("(=, X{}, _, X{})".format(prev, self.quad_syntax_cnt))
+                    self.quad_syntax_cnt += 1
+                elif len(reduced_sentence)>=2 and reduced_sentence[-2] in self.operations:
+                    prev2 = quad_stack.pop()
+                    prev1 = quad_stack.pop()
+                    quad_stack.append(self.quad_syntax_cnt)
+                    self.quad_expressions.append("({}, X{}, X{}, X{})".format(reduced_sentence[-2], prev1, prev2, self.quad_syntax_cnt))
+                    self.quad_syntax_cnt += 1
+                elif len(reduced_sentence)>=2 and reduced_sentence[-2] == "=":
+                    prev = quad_stack.pop()
+                    quad_stack.append(self.quad_syntax_cnt)
+                    self.quad_expressions.append("(=, X{}, _, X{})".format(prev, self.quad_syntax_cnt))
+                    self.quad_syntax_cnt += 1
             elif action == "acc":
-                right = self.grammar[self.start][0].split("=")
-                self.quad_expression.append("(=, {}, _, {})".format(right[1], right[0]))
                 return True
             else:
                 raise Exception("error: action {} error".format(action))
@@ -444,4 +447,7 @@ if __name__ == "__main__":
         print("False")
     else:
         print(res)
-        print(parser.quad_expression)
+        print("#"*30)
+        for expression in parser.quad_expressions:
+            print(expression)
+        print("The final result is stored in X{}".format(parser.quad_syntax_cnt-1))
