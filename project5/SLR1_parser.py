@@ -39,6 +39,15 @@ class SLR1Parser:
         self.build_dfa()
 
     def read_file(self, filepath: Path) -> str:
+        """
+        Read file from a given filepath
+
+        Args:
+            filepath (Path): filepath given
+
+        Returns:
+            str: the parsed string read from the file
+        """
         f = open(filepath, "r")
         pattern = r"'[^']*'"
         string = ""
@@ -52,6 +61,10 @@ class SLR1Parser:
         return string
 
     def preprocess(self) -> None:
+        """
+        Preprocess before parsing, including build reversed grammar, build VT and VN set,
+        and flatten the grammar as strings
+        """
         # build reversed grammar
         for key, values in self.grammar.items():
             for value in values:
@@ -73,6 +86,9 @@ class SLR1Parser:
                         self.VT.add(ch)
 
     def get_first_set(self) -> None:
+        """
+        Get first sets for non-terminal characters in the grammar
+        """
         self.first_dict = {s: set() for s in (self.VT | self.VN)}
         # 1. calculate first set for terminals
         for x in self.VT:
@@ -115,6 +131,9 @@ class SLR1Parser:
                             set_updated = True
 
     def get_follow_set(self) -> None:
+        """
+        Get follow sets for non-terminal characters in the grammar
+        """
         self.follow_dict = {s: set() for s in (self.VN)}
         # rule 1
         self.follow_dict[self.start].add("#")
@@ -205,6 +224,15 @@ class SLR1Parser:
             return res, read[-1]
 
     def _build_closure(self, item: str) -> Set[str]:
+        """
+        Build closure for an item given
+
+        Args:
+            item (str): item given
+
+        Return:
+            Set (str): a set of closure for item
+        """
         res: Set[str] = set()
         res.add(item)
         idx = item.index(".")
@@ -219,25 +247,62 @@ class SLR1Parser:
                 res |= self._build_closure(next_item)
             return res
 
-    def _find_items_state(self, target_items: Set[str]) -> Optional[int]:
+    def _find_state(self, target_items: Set[str]) -> Optional[int]:
+        """
+        Find the state index of the set given
+
+        Args:
+            target_items (Set[str]): the input set given
+
+        Returns:
+            Optional[int]: if we can find the state index, we will return the index.
+            Otherwise, return None.
+        """
         for idx, items in self.states.items():
             if target_items == items:
                 return idx
         return None
 
     def _find_terminal_item(self, idx: int) -> Optional[str]:
+        """
+        Find an item ending with "." from a given state
+
+        Args:
+            idx (int): the index of state
+
+        Returns:
+            Optional[str]: if we can find an item ending with ".", return
+            the item. Otherwise return None.
+        """
         for item in self.states[idx]:
             if item[-1] == ".":
                 return item
         return None
 
     def _find_grammar(self, idx: int) -> str:
+        """
+        Given the index of grammar, find the grammar sentence
+
+        Args:
+            idx (int): index given
+
+        Returns:
+            sentence from grammar
+        """
         for key, value in self.grammar_idx.items():
             if value == idx:
                 return key
         return ""
 
     def _go(self, state_idx: int) -> None:
+        """
+        _go method is used to build states, goto_chart, and action_chart, which are components of DFA. It
+        starts from index 0, and does a recursive search to get all states and all edges for DFA.
+
+        Args:
+            state_idx (int): current state index
+
+        """
         state: Set[str] = self.states[state_idx]
         cache: Dict[str, Set[str]] = {}
         for item in state:
@@ -252,7 +317,7 @@ class SLR1Parser:
                 cache[next_chr] = set(closure)
 
         for input_chr, items in cache.items():
-            next_idx = self._find_items_state(items)
+            next_idx = self._find_state(items)
             if next_idx is None:
                 next_idx = len(self.states)
                 self.states[next_idx] = items
@@ -268,6 +333,10 @@ class SLR1Parser:
                     self.goto_chart[(state_idx, input_chr)] = next_idx
 
     def build_dfa(self) -> None:
+        """
+        Entry point of building a DFA. It initialize the state index 0, then it calls _go method
+        from state index 0, and then build DFA recursively.
+        """
         # initialize start point
         start_item: Set[str] = self._build_initial_items(self.start)
         if start_item is None or len(start_item) != 1:
@@ -288,6 +357,16 @@ class SLR1Parser:
                 self.action_chart[(idx, "#")] = "acc"
 
     def parse(self, filepath: Path) -> bool:
+        """
+        Parse and judge the correctness of a given string
+
+        Args:
+            filepath (Path): filepath given to read
+
+        Returns:
+            bool: the correctness of the string parsed from file. If it
+            is correct, return True. Otherwise, return False.
+        """
         string = self.read_file(filepath) + "#"
         pt = 0
         state_stack = [0]
