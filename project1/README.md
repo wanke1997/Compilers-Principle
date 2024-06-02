@@ -26,7 +26,7 @@ This script is compatible with Python 3.x.
 
 The file structure is as follows:
 
-.
+.  
 ├── input  
 │   └── test_case1.txt  
 └── parser.py  
