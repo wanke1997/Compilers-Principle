@@ -42,6 +42,20 @@ A' -> β | γ
 ### Installation
 No installation is required. Simply clone the repository or copy the `recursive_parser.py` file into your project directory.
 
+## File Structure
+
+- `recursive_parser.py`: Contains the implementation of the recursive descent parser.
+- `input/`: Directory containing test case files.
+
+## Test Cases
+
+Test cases are provided in the `input/` directory. Each test case file should contain a string representing an expression to be parsed by the parser.
+
+## Bouns
+This project we added a cache to store the states visited substrings. When a substring is visited and it is correct, then we added it to cache. Next time when the parser revisits this
+string, it will no longer take time to parse it, instead it will return the resule immediately. 
+This will save a lot of time. 
+
 ### Usage Example
 
 ```python
@@ -60,17 +74,3 @@ result = recursive_parser.A(filepath)
 
 # Print the result
 print("Result is {}.".format(result))
-
-## File Structure
-
-- `recursive_parser.py`: Contains the implementation of the recursive descent parser.
-- `input/`: Directory containing test case files.
-
-## Test Cases
-
-Test cases are provided in the `input/` directory. Each test case file should contain a string representing an expression to be parsed by the parser.
-
-## Bouns
-This project we added a cache to store the states visited substrings. When a substring is visited and it is correct, then we added it to cache. Next time when the parser revisits this
-string, it will no longer take time to parse it, instead it will return the resule immediately. 
-This will save a lot of time. 
