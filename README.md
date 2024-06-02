@@ -1,7 +1,7 @@
 # Compilers Principles Project
 
 ## Introduction
-Welcome to the Compilers Principles Project! This project is based on the project instruction of Compilers Principle of Beijing Jiaotong University (BJTU) 2019 Spring Semester. For more details, please refer to the instruction document (in Chinese) in the repository. At that time I was instructed by Mr. Jin'an Xu, the professor of Computer Science and Technology Department of Beijing Jiaotong University. I deeply appreciate and am grateful for his instructions!
+Welcome to the Compilers Principles Project! This project is based on the project instruction of Compilers Principle of Beijing Jiaotong University (BJTU) 2019 Spring Semester. I rewrite all five projects in 2024 with better code quality. For more details, please refer to the instruction document (in Chinese) in the repository. At that time I was instructed by Mr. Jin'an Xu, the professor of Computer Science and Technology Department of Beijing Jiaotong University. I deeply appreciate and am grateful for his instructions!
 
 This project is an exploration of fundamental concepts in compilers using Python. Here, we delve into the intricate world of lexing, parsing, semantic analysis, code generation, and optimization.
 
